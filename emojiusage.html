@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.chart rect {
+    fill: steelblue;
+}
+
+.chart text {
+    fill: white;
+    font: 10px sans-serif;
+    text-anchor: end;
+}
+
+</style>
+<h1>Emoji Data!</h1>
+<svg class="chart"></svg>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script>
+    var width = 500,
+        barHeight = 20;
+
+    var x = d3.scale.linear().range([0, width]);
+
+    var chart = d3.select(".chart").attr("width", width);
+
+    var socket = io("localhost:3000");
+    console.log("Page up");
+
+    socket.on("emojiCount", function(emojiData) {
+        let emojiCount = JSON.parse(emojiData);
+        
+        var emojiCountPairs = [];
+
+        for (var emoji in emojiCount) {
+            if (emojiCount.hasOwnProperty(emoji)) {
+                emojiCountPairs.push([emoji, emojiCount[emoji]]);
+            }
+        }
+
+        x.domain([0, d3.max(emojiCountPairs, function(d) { return d[1];})]);
+
+        chart.attr("height", barHeight * emojiCountPairs.length);
+
+        var bar = chart.selectAll("g")
+            .data(emojiCountPairs)
+            .enter().append("g")
+            .attr("transform", function(d, i) { return "translate(0," + i *
+                barHeight + ")"; });
+
+        bar.append("rect")
+            .attr("width", function(d) { return x(d[1]); })
+            .attr("height", barHeight - 1);
+
+        bar.append("text")
+            .attr("x", function(d) { return x(d[1]) - 3; })
+            .attr("y", barHeight / 2)
+            .attr("dy", ".35em")
+            .text(function(d) {return d[0];});
+
+        /*
+        d3.select("#emojigraph").selectAll("div")
+            .data(emojiCountPairs)
+            .enter().append("div")
+            .style("width", function(emojiData) { 
+                return emojiData[1] + "px"; })
+            .style("background-color", (emojiData) => {return "black";})
+            .text((emojiData) => {return emojiData[0];})
+            .style("color", (emojiData) => {return "red"});
+        // */
+    });
+    </script>
+
+<body>
+    <div id="emojigraph"</div>
+</body>
+</html>
