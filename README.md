@@ -23,3 +23,4 @@ via a webSocket.
       then also take into account edits that remove emojis.
     - Add external database for permanent data collection.
     - Add better visualization for D3.
+    - Migrate and refactor emojiListener to have dependency on the emojiCounter module.
