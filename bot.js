@@ -11,9 +11,16 @@ const client = new Discord.Client();
 // File open
 const fs = require("fs");
 
+// Modules
+const EmojiCounter = require("./emojicounter.js");
+
 // Client
 const io = require('socket.io-client');
 const socket = io('http://localhost:3000');
+
+
+// Creating the emojicounter
+var ec = new EmojiCounter.EmojiCounter(socket);
 
 var emojiCount = {};
 var regex = /\<\:([\w]{2,})\:([\d]+)\>/g;
@@ -60,35 +67,10 @@ client.on('message', msg => {
     let content = msg.content;
     let server = msg.guild;
     // If server isn't in the database, add the server and populate its emojis.
-    serverCheck(server);
-    
-    let m;
+    ec.serverCheck(server);
+   
+    ec.parseMessage(content, server);
 
-    while ((m = regex.exec(content)) !== null) {
-        // This is necessary to avoid infinite loops with zero-width matches
-        if (m.index === regex.lastIndex) {
-            regex.lastIndex++;
-        }
-        
-        let emojiName = m[1];
-        if(!(emojiExists(server, emojiName))) {
-            addEmoji(server, emojiName);
-        }
-        
-        emojiCount[server][emojiName] += 1;
-        socket.emit('emoji', emojiName);
-
-        //console.log(`Emoji : ${m[1]} | Count : ${emojiCount[server][m[1]]}`);
-        // The result can be accessed through the `m`-variable.
-        /*
-        m.forEach((match, groupIndex) => {
-            console.log(`Found match, group ${groupIndex}: ${match}`);
-        });
-        // */
-    }
-
-    //console.log(content);
-    
 });
 
 client.on('messageReactionAdd', (msgReaction, user) => {
@@ -96,12 +78,12 @@ client.on('messageReactionAdd', (msgReaction, user) => {
     let server = msgReaction.message.guild;
     let emojiName = emoji.name;
     console.log(`New Reaction! ${emojiName} in ${server}`);
-    serverCheck(server);
-    if(!(emojiExists(server, emojiName))) {
-        addEmoji(server, emojiName);
+    ec.serverCheck(server);
+    if(!ec.emojiExists(server, emojiName)) {
+        ec.newEmoji(server, emojiName);
     }
-
-    emojiCount[server][emojiName] += 1;
+    
+    ec.updateEmojiCount(server, emojiName, 1);
     socket.emit('emoji', emojiName);
 
 });
@@ -112,12 +94,12 @@ client.on('messageReactionRemove', (msgReaction, user) => {
     let emojiName = emoji.name;
 
     console.log(`Reaction removed. ${emojiName} in ${server}`);
-    serverCheck(server);
-    if(!(emojiExists(server, emojiName))) {
-        addEmoji(server, emojiName);
+    ec.serverCheck(server);
+    if(!ec.emojiExists(server, emojiName)) {
+        ec.addEmoji(server, emojiName);
     }
     
-    emojiCount[server][emojiName] -= 1;
+    ec.updateEmojiCount(server, emojiName, -1);
     socket.emit('emojiRemove', emojiName);
 
 });

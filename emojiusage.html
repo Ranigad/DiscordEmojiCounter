@@ -2,14 +2,12 @@
 <meta charset="utf-8">
 <style>
 
-.chart rect {
-    fill: steelblue;
-}
-
-.chart text {
-    fill: white;
-    font: 10px sans-serif;
-    text-anchor: end;
+div.bar {
+    background-color: steelblue;
+    font: 10 px arial, sans-serif;
+    color: white;
+    border: 1px solid white;
+    text-indent: 4px;
 }
 
 </style>
@@ -18,17 +16,68 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 <script>
+    var guilds = []
+    var emojiIndex = {};
+    var emojis = [];
+    //var emojis = new Map();
+
     var width = 500,
         barHeight = 20;
 
     var x = d3.scale.linear().range([0, width]);
 
-    var chart = d3.select(".chart").attr("width", width);
+    // var chart = d3.select(".chart").attr("width", width);
 
     var socket = io("localhost:3000");
-    console.log("Page up");
+    console.log("Page Online")
+    
+//    var bar = chart.selectAll("g").data(emojis.entries());
 
-    socket.on("emojiCount", function(emojiData) {
+    var update = function() {
+        console.log(emojis);
+
+        x.domain([0, d3.max(emojis, function(d) { return +d[1];})]);
+        
+        var emch = d3.select("#emojigraph").selectAll(".bar")
+            .data(emojis)
+            .style("width", function(d) { return x(d[1]) + "px"; })
+            .style("margin-right", function(d) { return (100 - d[1]) + "px"; })
+            .text(function(d) { return d[0]; });
+
+        emch.enter().append("div").attr("class", "bar")
+            .style("width", function(d) { return x(d[1]) + "px"; })
+            .style("margin-right", function(d) { return (100 - d[1]) + "px"; })
+            .text(function(d) { return d[0]; });
+
+        emch.exit().remove();
+
+        /*
+        chart = d3.select(".chart").attr("height", barHeight * emojis.length);
+
+        var bar = chart.selectAll("g").data(emojis);
+
+        bar.attr("width", function(d) { return x(+d[1]); });
+
+        bar.enter().append("g")
+            .attr("transform", function(d, i) { return "translate(0," + i * barHeight + ")"; });
+        
+        bar.append("rect")
+            .attr("width", function(d) { return x(+d[1]); })
+            .attr("height", barHeight - 1);
+
+        bar.append("text")
+            .attr("x", function(d) { return x(+d[1]) - 3; })
+            .attr("y", barHeight / 2)
+            .attr("dy", ".35em")
+            .text(function(d) {return d[0];});
+        
+        bar.exit().remove();
+        // */
+    }
+
+    socket.on("emoji", function(emojiName) {
+        console.log("emoji message | " + emojiName); 
+        /*
         let emojiCount = JSON.parse(emojiData);
         
         var emojiCountPairs = [];
@@ -38,28 +87,18 @@
                 emojiCountPairs.push([emoji, emojiCount[emoji]]);
             }
         }
+        */
 
-        x.domain([0, d3.max(emojiCountPairs, function(d) { return d[1];})]);
+        if(!(emojiName in emojiIndex)) {
+            emojiIndex[emojiName] = emojis.length;
+            emojis.push([emojiName, 1]);
+        } else {
+            emojis[emojiIndex[emojiName]][1] += 1;
+        }
 
-        chart.attr("height", barHeight * emojiCountPairs.length);
+        update();
 
-        var bar = chart.selectAll("g")
-            .data(emojiCountPairs)
-            .enter().append("g")
-            .attr("transform", function(d, i) { return "translate(0," + i *
-                barHeight + ")"; });
-
-        bar.append("rect")
-            .attr("width", function(d) { return x(d[1]); })
-            .attr("height", barHeight - 1);
-
-        bar.append("text")
-            .attr("x", function(d) { return x(d[1]) - 3; })
-            .attr("y", barHeight / 2)
-            .attr("dy", ".35em")
-            .text(function(d) {return d[0];});
-
-        /*
+               /*
         d3.select("#emojigraph").selectAll("div")
             .data(emojiCountPairs)
             .enter().append("div")
@@ -70,9 +109,26 @@
             .style("color", (emojiData) => {return "red"});
         // */
     });
+
+    socket.on("emojiRemove", function(emojiName) {
+        console.log("emojiRemove | " + emojiName);
+        if(!(emojiName in emojiIndex)) {
+            emojiIndex[emojiName] = emojis.length;
+            emojis.push([emojiName, 0]);
+        } else {
+            emojis[emojiIndex[emojiName]][1] -= 1;
+        }
+
+        if (emojis[emojiName] < 0) {
+            console.log(emojiName + " is below 0?");
+        }
+        
+        update();
+    });
+
     </script>
 
 <body>
-    <div id="emojigraph"</div>
+    <div id="emojigraph"></div>
 </body>
 </html>

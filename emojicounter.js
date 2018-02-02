@@ -8,15 +8,15 @@ class EmojiCounter {
         this.regex = /\<\:([\w]{2,})\:([\d]+)\>/g;
     }
 
-    set socket(socket) {
+    setSocket(socket) {
         this.socket = socket;
     }
 
-    get emojiCount(server) {
+    getEmojis(server) {
         if (server !== undefined) {
-            return emojiCount[server];
+            return this.emojiCount[server];
         } else {
-            return emojiCount;
+            return this.emojiCount;
         }
     }
 
@@ -61,11 +61,11 @@ class EmojiCounter {
         } 
     }
 
-    parseMessage(message, server, socket) {
+    parseMessage(message, server) {
         // Code based off of regex101.com
         let m;
 
-        while((m === this.regex.exec(message)) !== null) {
+        while((m = this.regex.exec(message)) !== null) {
             // Avoiding infinite loops
             if (m.index === this.regex.lastIndex) {
                 regex.lastIndex++;
@@ -78,8 +78,9 @@ class EmojiCounter {
 
             this.updateEmojiCount(server, emojiName, 1);
             
-            if(socket !== undefined) {
-                socket.emit('emoji', emojiName);
+            if(this.socket !== undefined) {
+                this.socket.emit('emoji', emojiName);
+                console.log(`${emojiName} emitted`);
             } else {
                 console.error("Socket not specified");
             }
