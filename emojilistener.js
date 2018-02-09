@@ -22,12 +22,6 @@ io.on('connection', function(socket){
     // /*
     socket.on('emoji', function(emojiName) {
         console.log(emojiName);
-        /*
-        if(!(emojiName in emojiCount)) {
-            emojiCount[emojiName] = 1;
-        } else {
-            emojiCount[emojiName] += 1;
-        }
         // */
         io.emit("emoji", emojiName);
         //console.log(emojiCount);

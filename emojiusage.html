@@ -12,7 +12,7 @@ div.bar {
 
 </style>
 <h1>Emoji Data!</h1>
-<svg class="chart"></svg>
+<!--<svg class="chart"></svg>-->
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 <script>
@@ -26,13 +26,9 @@ div.bar {
 
     var x = d3.scale.linear().range([0, width]);
 
-    // var chart = d3.select(".chart").attr("width", width);
-
     var socket = io("localhost:3000");
     console.log("Page Online")
     
-//    var bar = chart.selectAll("g").data(emojis.entries());
-
     var update = function() {
         console.log(emojis);
 
@@ -51,43 +47,10 @@ div.bar {
 
         emch.exit().remove();
 
-        /*
-        chart = d3.select(".chart").attr("height", barHeight * emojis.length);
-
-        var bar = chart.selectAll("g").data(emojis);
-
-        bar.attr("width", function(d) { return x(+d[1]); });
-
-        bar.enter().append("g")
-            .attr("transform", function(d, i) { return "translate(0," + i * barHeight + ")"; });
-        
-        bar.append("rect")
-            .attr("width", function(d) { return x(+d[1]); })
-            .attr("height", barHeight - 1);
-
-        bar.append("text")
-            .attr("x", function(d) { return x(+d[1]) - 3; })
-            .attr("y", barHeight / 2)
-            .attr("dy", ".35em")
-            .text(function(d) {return d[0];});
-        
-        bar.exit().remove();
-        // */
     }
 
     socket.on("emoji", function(emojiName) {
         console.log("emoji message | " + emojiName); 
-        /*
-        let emojiCount = JSON.parse(emojiData);
-        
-        var emojiCountPairs = [];
-
-        for (var emoji in emojiCount) {
-            if (emojiCount.hasOwnProperty(emoji)) {
-                emojiCountPairs.push([emoji, emojiCount[emoji]]);
-            }
-        }
-        */
 
         if(!(emojiName in emojiIndex)) {
             emojiIndex[emojiName] = emojis.length;
@@ -98,16 +61,6 @@ div.bar {
 
         update();
 
-               /*
-        d3.select("#emojigraph").selectAll("div")
-            .data(emojiCountPairs)
-            .enter().append("div")
-            .style("width", function(emojiData) { 
-                return emojiData[1] + "px"; })
-            .style("background-color", (emojiData) => {return "black";})
-            .text((emojiData) => {return emojiData[0];})
-            .style("color", (emojiData) => {return "red"});
-        // */
     });
 
     socket.on("emojiRemove", function(emojiName) {
@@ -119,8 +72,21 @@ div.bar {
             emojis[emojiIndex[emojiName]][1] -= 1;
         }
 
-        if (emojis[emojiName] < 0) {
-            console.log(emojiName + " is below 0?");
+        if (emojis[emojiIndex[emojiName]][1] <= 0) {
+            // splice
+            var index = emojiIndex[emojiName];
+            for(let i in emojiIndex) {
+                if(emojiIndex[i] > index) {
+                    emojiIndex[i] -= 1;
+                }
+            }
+
+            emojis.splice(emojiIndex[emojiName], 1);
+            // Delete dictionary entry
+            delete emojiIndex[emojiName];
+            //console.log(emojiName + " is below 0?");
+            console.log(emojis);
+            console.log(emojiIndex);
         }
         
         update();

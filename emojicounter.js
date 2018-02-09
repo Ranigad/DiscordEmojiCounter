@@ -51,13 +51,6 @@ class EmojiCounter {
         if(!this.serverExists(server)) {
             console.log(`Initializing ${server.name}`);
             this.newServer(server);
-            /*
-            this.emojiCount[server] = {};
-            server.emojis.array().forEach((emoji) => {
-                console.log(emoji.name);
-                this.emojiCount[server][emoji.name] = 0;
-            });
-            // */
         } 
     }
 
